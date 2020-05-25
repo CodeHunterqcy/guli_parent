@@ -54,11 +54,6 @@ public class BannerAdminController {
         return R.ok();
     }
 
-    @ApiOperation(value = "删除Banner")
-    @DeleteMapping("remove/{id}")
-    public R remove(@PathVariable String id) {
-        bannerService.removeById(id);
-        return R.ok();
-    }
+
 }
 
