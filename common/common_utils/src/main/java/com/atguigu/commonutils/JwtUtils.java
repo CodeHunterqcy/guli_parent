@@ -16,7 +16,7 @@ import java.util.Date;
  */
 public class JwtUtils {
 
-    public static final long EXPIRE = 1000 * 60 * 60 * 24;//过期时间
+    public static final long EXPIRE = 1000 * 60 * 60 * 24;//设置过期时间
     public static final String APP_SECRET = "ukc8BDbRigUDaY6pZFfWus2jZWLPHO";//密钥
     //生成token字符串
     public static String getJwtToken(String id, String nickname){
