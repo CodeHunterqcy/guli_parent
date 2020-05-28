@@ -44,7 +44,7 @@ public class UcenterMemberController {
         return R.ok();
     }
 
-    //根据token获取用户信息,用于前端用户显示
+    //根据token获取用户信息
     @GetMapping("getMemberInfo")
     public R getMemberInfo(HttpServletRequest request) {
         //调用jwt工具类的方法。根据request对象获取头信息，返回用户id
