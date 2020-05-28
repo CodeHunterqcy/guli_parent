@@ -11,6 +11,6 @@ public class RegisterVo {
     private String mobile;
     @ApiModelProperty(value = "密码")
     private String password;
-    @ApiModelProperty(value = "验证码")
-    private String code;
+   /* @ApiModelProperty(value = "验证码")
+    private String code;*/
 }
