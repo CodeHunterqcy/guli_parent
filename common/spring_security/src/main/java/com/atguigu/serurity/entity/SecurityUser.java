@@ -30,6 +30,7 @@ public class SecurityUser implements UserDetails {
     private List<String> permissionValueList;
 
     public SecurityUser() {
+
     }
 
     public SecurityUser(User user) {
