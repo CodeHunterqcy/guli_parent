@@ -25,13 +25,12 @@ public class OssServiceImpl implements OssService {
 
         try {
             // 创建OSS实例。
-                       OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
 
             //获取上传文件输入流
             InputStream inputStream = file.getInputStream();
             //获取文件名称
             String fileName = file.getOriginalFilename();
-
             //1 在文件名称里面添加随机唯一的值
             String uuid = UUID.randomUUID().toString().replaceAll("-","");
             // yuy76t5rew01.jpg
