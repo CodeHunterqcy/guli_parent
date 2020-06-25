@@ -53,8 +53,10 @@ public class CourseFrontController {
     //3.搜索课程的方法
     @GetMapping("getCourseByStr/{str}")
     public R getCourseByStr(String str){
-        val courseList = courseService.getCourseByStr(str);
+        List<EduCourse> courseList = courseService.getCourseByStr(str);
+
         return R.ok().data("courseList",courseList);
+
 
     }
 }

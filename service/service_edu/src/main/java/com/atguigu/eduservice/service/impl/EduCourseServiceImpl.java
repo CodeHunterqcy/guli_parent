@@ -188,5 +188,10 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     public CourseWebVo getBaseCourseInfo(String courseId) {
         return baseMapper.getBaseCourseInfo(courseId);
     }
+    //根据搜索字符串查询所需课程
+    @Override
+    public List<EduCourse> getCourseByStr(String str) {
+        return null;
+    }
 
 }

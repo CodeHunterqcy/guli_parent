@@ -41,5 +41,5 @@ public interface EduCourseService extends IService<EduCourse> {
 
     CourseWebVo getBaseCourseInfo(String courseId);
 
-    List<CourseFrontVo> getCourseByStr(String str);
+    List<EduCourse> getCourseByStr(String str);
 }
