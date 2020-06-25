@@ -13,12 +13,16 @@ import com.atguigu.eduservice.service.EduCourseDescriptionService;
 import com.atguigu.eduservice.service.EduCourseService;
 import com.atguigu.eduservice.service.EduVideoService;
 import com.atguigu.servicebase.exceptionhandler.GuliException;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,6 +30,7 @@ import org.springframework.util.StringUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -191,7 +196,29 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     //根据搜索字符串查询所需课程
     @Override
     public List<EduCourse> getCourseByStr(String str) {
-        return null;
+        RedisSerializer redisSerializer  =new StringRedisSerializer();
+        RedisTemplate redisTemplate = new RedisTemplate();
+        redisTemplate.setKeySerializer(redisSerializer);
+
+
+        List<EduCourse> courseList = (List<EduCourse>) redisTemplate.opsForValue().get("courselist");
+        //双重检测
+        if (null==courseList){
+            synchronized (this){
+                courseList = (List<EduCourse>) redisTemplate.opsForValue().get("courselist");
+                if (null==courseList){
+                   QueryWrapper wrapper = new QueryWrapper();
+                   wrapper.like("title",str);
+                    courseList = baseMapper.selectList(wrapper);
+                    redisTemplate.opsForValue().set("courselist",courseList);
+                }
+            }
+
+        }
+
+
+
+        return courseList;
     }
 
 }
