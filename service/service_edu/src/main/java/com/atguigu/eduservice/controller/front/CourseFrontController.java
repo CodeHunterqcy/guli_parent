@@ -11,6 +11,7 @@ import com.atguigu.eduservice.service.EduCourseService;
 import com.atguigu.eduservice.service.EduTeacherService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,6 +51,12 @@ public class CourseFrontController {
         return R.ok().data("courseWebVo",courseWebVo).data("chapterVideoList",chapterVideoList);
     }
     //3.搜索课程的方法
+    @GetMapping("getCourseByStr/{str}")
+    public R getCourseByStr(String str){
+        val courseList = courseService.getCourseByStr(str);
+        return R.ok().data("courseList",courseList);
+
+    }
 }
 
 

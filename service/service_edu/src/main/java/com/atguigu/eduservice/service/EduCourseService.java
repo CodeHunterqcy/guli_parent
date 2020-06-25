@@ -8,6 +8,7 @@ import com.atguigu.eduservice.entity.vo.CoursePublishVo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,4 +40,6 @@ public interface EduCourseService extends IService<EduCourse> {
 
 
     CourseWebVo getBaseCourseInfo(String courseId);
+
+    List<CourseFrontVo> getCourseByStr(String str);
 }
