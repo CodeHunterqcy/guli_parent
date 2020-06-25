@@ -36,8 +36,6 @@ public class IndexFrontController {
         wrapperTeacher.orderByDesc("id");
         wrapperTeacher.last("limit 4");
         List<EduTeacher> teacherList  =teacherService.list(wrapperTeacher);
-
-
         return R.ok().data("eduList",eduList).data("teacherList",teacherList);
     }
 
