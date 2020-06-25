@@ -49,6 +49,7 @@ public class CourseFrontController {
 
         return R.ok().data("courseWebVo",courseWebVo).data("chapterVideoList",chapterVideoList);
     }
+    //3.搜索课程的方法
 }
 
 
