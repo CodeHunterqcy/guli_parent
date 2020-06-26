@@ -183,7 +183,6 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
         map.put("total", total);
         map.put("hasNext", hasNext);
         map.put("hasPrevious", hasPrevious);
-
         //map返回
         return map;
     }

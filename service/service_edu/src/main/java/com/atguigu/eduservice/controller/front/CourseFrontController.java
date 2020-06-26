@@ -1,15 +1,13 @@
 package com.atguigu.eduservice.controller.front;
 
+import com.atguigu.commonutils.LRU;
 import com.atguigu.commonutils.R;
 import com.atguigu.eduservice.entity.EduCourse;
-import com.atguigu.eduservice.entity.EduTeacher;
 import com.atguigu.eduservice.entity.chapter.ChapterVo;
 import com.atguigu.eduservice.entity.frontvo.CourseFrontVo;
 import com.atguigu.eduservice.entity.frontvo.CourseWebVo;
 import com.atguigu.eduservice.service.EduChapterService;
 import com.atguigu.eduservice.service.EduCourseService;
-import com.atguigu.eduservice.service.EduTeacherService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,12 +27,14 @@ public class CourseFrontController {
     @Autowired
     private EduChapterService chapterService;
 
+    private LRU<String, EduCourse> lruList = new LRU<>(4);
+
     //1 条件查询带分页查询课程
     @PostMapping("getFrontCourseList/{page}/{limit}")
     public R getFrontCourseList(@PathVariable long page, @PathVariable long limit,
                                 @RequestBody(required = false) CourseFrontVo courseFrontVo) {
-        Page<EduCourse> pageCourse = new Page<>(page,limit);
-        Map<String,Object> map = courseService.getCourseFrontList(pageCourse,courseFrontVo);
+        Page<EduCourse> pageCourse = new Page<>(page, limit);
+        Map<String, Object> map = courseService.getCourseFrontList(pageCourse, courseFrontVo);
         //返回分页所有数据
         return R.ok().data(map);
     }
@@ -42,23 +42,31 @@ public class CourseFrontController {
     //2 课程详情的方法
     @GetMapping("getFrontCourseInfo/{courseId}")
     public R getFrontCourseInfo(@PathVariable String courseId) {
+        EduCourse eduCourse = courseService.getById(courseId);
+        lruList.put(courseId, eduCourse);
         //根据课程id，编写sql语句查询课程信息
         CourseWebVo courseWebVo = courseService.getBaseCourseInfo(courseId);
 
         //根据课程id查询章节和小节
         List<ChapterVo> chapterVideoList = chapterService.getChapterVideoByCourseId(courseId);
 
-        return R.ok().data("courseWebVo",courseWebVo).data("chapterVideoList",chapterVideoList);
+        return R.ok().data("courseWebVo", courseWebVo).data("chapterVideoList", chapterVideoList);
     }
+
     //3.搜索课程的方法
     @GetMapping("getCourseByStr/{str}")
-    public R getCourseByStr(String str){
+    public R getCourseByStr(String str) {
         List<EduCourse> courseList = courseService.getCourseByStr(str);
-
-        return R.ok().data("courseList",courseList);
-
-
+        return R.ok().data("courseList", courseList);
     }
+
+    //4.最近看过的课程
+    @PostMapping("getLRUCourseList")
+    public R getLRUCourseList() {
+        List<EduCourse> list = lruList.getList();
+        return R.ok().data("lrucourseList",list);
+    }
+
 }
 
 

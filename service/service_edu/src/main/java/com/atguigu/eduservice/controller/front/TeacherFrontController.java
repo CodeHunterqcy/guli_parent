@@ -32,7 +32,6 @@ public class TeacherFrontController {
         //返回分页所有数据
         return R.ok().data(map);
     }
-
     //2 讲师详情的功能
     @GetMapping("getTeacherFrontInfo/{teacherId}")
     public R getTeacherFrontInfo(@PathVariable String teacherId) {
