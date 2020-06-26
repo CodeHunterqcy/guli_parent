@@ -25,6 +25,25 @@ redis这块，没有做缓存一致性，我自己设置了几个场景来学习
 然后就是SpringBoot本体了，前后端分离开发，RESTful规范接口，swagger2太好用了。
 
 # 项目图片
+##后台前端页面
+登录注册界面略过
+##讲师管理
 
+####讲师列表
+![讲师列表](https://img-blog.csdnimg.cn/20200627011850158.png)
+####添加讲师
+![添加讲师](https://img-blog.csdnimg.cn/20200627012649277.png)
 
-![后台前端](https://img-blog.csdnimg.cn/20200627011850158.png)
+##课程分类管理
+
+###上传excel添加课程分类
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200627012801638.png)
+
+##课程管理
+
+###添加课程
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200627013013542.png)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200627013108382.png)
+###发布课程
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200627013220613.png)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200627013606334.png)
