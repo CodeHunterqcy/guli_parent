@@ -7,6 +7,7 @@ import com.atguigu.eduservice.entity.frontvo.CourseWebVo;
 import com.atguigu.eduservice.entity.vo.CourseInfoVo;
 import com.atguigu.eduservice.entity.vo.CoursePublishVo;
 import com.atguigu.eduservice.entity.frontvo.NullValueResult;
+import com.atguigu.eduservice.filter.RedisBloomFilter;
 import com.atguigu.eduservice.mapper.EduCourseMapper;
 import com.atguigu.eduservice.service.EduChapterService;
 import com.atguigu.eduservice.service.EduCourseDescriptionService;
@@ -16,6 +17,7 @@ import com.atguigu.servicebase.exceptionhandler.GuliException;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.velocity.runtime.directive.contrib.For;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -56,18 +58,21 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     @Autowired
     private RedisTemplate redisTemplate;
     @Resource
-    private ValueOperations<String,Object> valueOperations;
+    private ValueOperations<String, Object> valueOperations;
+    @Autowired
+    private RedisBloomFilter bloomFilter;
+
     //添加课程基本信息的方法
     @Override
     public String saveCourseInfo(CourseInfoVo courseInfoVo) {
         //1 向课程表添加课程基本信息
         //CourseInfoVo对象转换eduCourse对象
         EduCourse eduCourse = new EduCourse();
-        BeanUtils.copyProperties(courseInfoVo,eduCourse);
+        BeanUtils.copyProperties(courseInfoVo, eduCourse);
         int insert = baseMapper.insert(eduCourse);
-        if(insert == 0) {
+        if (insert == 0) {
             //添加失败
-            throw new GuliException(20001,"添加课程信息失败");
+            throw new GuliException(20001, "添加课程信息失败");
         }
 
         //获取添加之后课程id
@@ -90,7 +95,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
         //1 查询课程表
         EduCourse eduCourse = baseMapper.selectById(courseId);
         CourseInfoVo courseInfoVo = new CourseInfoVo();
-        BeanUtils.copyProperties(eduCourse,courseInfoVo);
+        BeanUtils.copyProperties(eduCourse, courseInfoVo);
 
         //2 查询描述表
         EduCourseDescription courseDescription = courseDescriptionService.getById(courseId);
@@ -104,10 +109,10 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     public void updateCourseInfo(CourseInfoVo courseInfoVo) {
         //1 修改课程表
         EduCourse eduCourse = new EduCourse();
-        BeanUtils.copyProperties(courseInfoVo,eduCourse);
+        BeanUtils.copyProperties(courseInfoVo, eduCourse);
         int update = baseMapper.updateById(eduCourse);
-        if(update == 0) {
-            throw new GuliException(20001,"修改课程信息失败");
+        if (update == 0) {
+            throw new GuliException(20001, "修改课程信息失败");
         }
 
         //2 修改描述表
@@ -139,8 +144,8 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
 
         //4 根据课程id删除课程本身
         int result = baseMapper.deleteById(courseId);
-        if(result == 0) { //失败返回
-            throw new GuliException(20001,"删除失败");
+        if (result == 0) { //失败返回
+            throw new GuliException(20001, "删除失败");
         }
     }
 
@@ -150,13 +155,13 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
         //2 根据讲师id查询所讲课程
         QueryWrapper<EduCourse> wrapper = new QueryWrapper<>();
         //判断条件值是否为空，不为空拼接
-        if(!StringUtils.isEmpty(courseFrontVo.getSubjectParentId())) { //一级分类
-            wrapper.eq("subject_parent_id",courseFrontVo.getSubjectParentId());
+        if (!StringUtils.isEmpty(courseFrontVo.getSubjectParentId())) { //一级分类
+            wrapper.eq("subject_parent_id", courseFrontVo.getSubjectParentId());
         }
-        if(!StringUtils.isEmpty(courseFrontVo.getSubjectId())) { //二级分类
-            wrapper.eq("subject_id",courseFrontVo.getSubjectId());
+        if (!StringUtils.isEmpty(courseFrontVo.getSubjectId())) { //二级分类
+            wrapper.eq("subject_id", courseFrontVo.getSubjectId());
         }
-        if(!StringUtils.isEmpty(courseFrontVo.getBuyCountSort())) { //关注度
+        if (!StringUtils.isEmpty(courseFrontVo.getBuyCountSort())) { //关注度
             wrapper.orderByDesc("buy_count");
         }
         if (!StringUtils.isEmpty(courseFrontVo.getGmtCreateSort())) { //最新
@@ -167,7 +172,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
             wrapper.orderByDesc("price");
         }
 
-        baseMapper.selectPage(pageParam,wrapper);
+        baseMapper.selectPage(pageParam, wrapper);
 
         List<EduCourse> records = pageParam.getRecords();
         long current = pageParam.getCurrent();
@@ -190,7 +195,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
         return map;
     }
 
-    //根据课程id，编写sql语句查询课程信息
+    /*//根据课程id，编写sql语句查询课程信息 方案一解决缓存穿透
     @Override
     public CourseWebVo getBaseCourseInfo(String courseId) {
         //redis拿
@@ -219,6 +224,33 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
 
         }
         return null;
+    }*/
+    //根据课程id，编写sql语句查询课程信息 方案二用自己写的布隆过滤器解决缓存穿透
+    @Override
+    public CourseWebVo getBaseCourseInfo(String courseId) {
+
+        if (!bloomFilter.isExist(courseId)) {
+            System.out.println("数据库不存在ID：" + courseId + "已拦截");
+            return null;
+        }
+        //redis拿
+        Object redisObj = valueOperations.get(courseId);
+        //命中缓存
+        if (null != redisObj) {
+            System.out.println("从缓存拿到的");
+            return (CourseWebVo) redisObj;
+        }
+        try {
+            CourseWebVo courseWebVo = baseMapper.getBaseCourseInfo(courseId);
+            if (courseWebVo != null) {
+                System.out.println("数据库查到，写入缓存中");
+                valueOperations.set(courseId, courseWebVo, 10, TimeUnit.MINUTES);
+                return courseWebVo;
+            }
+        } finally {
+
+        }
+        return null;
     }
 
     //查询课程
@@ -226,25 +258,24 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     //根据搜索字符串查询所需课程
     @Override
     public List<EduCourse> getCourseByStr(String str) {
-        RedisSerializer redisSerializer  =new StringRedisSerializer();
+        RedisSerializer redisSerializer = new StringRedisSerializer();
         RedisTemplate redisTemplate = new RedisTemplate();
         redisTemplate.setKeySerializer(redisSerializer);
 
         List<EduCourse> courseList = (List<EduCourse>) redisTemplate.opsForValue().get("courselist");
         //双重检测
-        if (null==courseList){
-            synchronized (this){
+        if (null == courseList) {
+            synchronized (this) {
                 courseList = (List<EduCourse>) redisTemplate.opsForValue().get("courselist");
-                if (null==courseList){
-                   QueryWrapper wrapper = new QueryWrapper();
-                   wrapper.like("title",str);
+                if (null == courseList) {
+                    QueryWrapper wrapper = new QueryWrapper();
+                    wrapper.like("title", str);
                     courseList = baseMapper.selectList(wrapper);
-                    redisTemplate.opsForValue().set("courselist",courseList);
+                    redisTemplate.opsForValue().set("courselist", courseList);
                 }
             }
 
         }
-
 
 
         return courseList;
