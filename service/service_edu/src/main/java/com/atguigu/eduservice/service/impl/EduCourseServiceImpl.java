@@ -7,6 +7,7 @@ import com.atguigu.eduservice.entity.frontvo.CourseFrontVo;
 import com.atguigu.eduservice.entity.frontvo.CourseWebVo;
 import com.atguigu.eduservice.entity.vo.CourseInfoVo;
 import com.atguigu.eduservice.entity.vo.CoursePublishVo;
+import com.atguigu.eduservice.entity.vo.NullValueResult;
 import com.atguigu.eduservice.mapper.EduCourseMapper;
 import com.atguigu.eduservice.service.EduChapterService;
 import com.atguigu.eduservice.service.EduCourseDescriptionService;
@@ -17,20 +18,27 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.databind.node.ValueNode;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * <p>
@@ -54,6 +62,10 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     @Autowired
     private EduChapterService chapterService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+    @Resource
+    private ValueOperations<String,Object> valueOperations;
     //添加课程基本信息的方法
     @Override
     public String saveCourseInfo(CourseInfoVo courseInfoVo) {
@@ -190,15 +202,39 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     //根据课程id，编写sql语句查询课程信息
     @Override
     public CourseWebVo getBaseCourseInfo(String courseId) {
-        return baseMapper.getBaseCourseInfo(courseId);
+        //redis拿
+
+        Object redisObj = valueOperations.get(courseId);
+        //命中缓存
+        if (null!=redisObj){
+            if (redisObj instanceof NullValueResult){
+                return null;
+            }
+            return (CourseWebVo) redisObj;
+        }
+        try{
+            CourseWebVo courseWebVo =  baseMapper.getBaseCourseInfo(courseId);
+
+            if (courseWebVo!=null){
+                valueOperations.set(courseId,courseWebVo,10,TimeUnit.MINUTES);
+                return courseWebVo;
+            }else{
+                valueOperations.set(courseId,new NullValueResult(),10,TimeUnit.MINUTES);
+            }
+        }finally {
+
+        }
+        return null;
     }
+
+    //查询课程
+
     //根据搜索字符串查询所需课程
     @Override
     public List<EduCourse> getCourseByStr(String str) {
         RedisSerializer redisSerializer  =new StringRedisSerializer();
         RedisTemplate redisTemplate = new RedisTemplate();
         redisTemplate.setKeySerializer(redisSerializer);
-
 
         List<EduCourse> courseList = (List<EduCourse>) redisTemplate.opsForValue().get("courselist");
         //双重检测

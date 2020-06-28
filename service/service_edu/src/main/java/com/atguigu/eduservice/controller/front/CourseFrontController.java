@@ -46,7 +46,6 @@ public class CourseFrontController {
         lruList.put(courseId, eduCourse);
         //根据课程id，编写sql语句查询课程信息
         CourseWebVo courseWebVo = courseService.getBaseCourseInfo(courseId);
-
         //根据课程id查询章节和小节
         List<ChapterVo> chapterVideoList = chapterService.getChapterVideoByCourseId(courseId);
 
