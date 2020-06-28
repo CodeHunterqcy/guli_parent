@@ -1,4 +1,4 @@
-package com.atguigu.eduservice.entity.vo;
+package com.atguigu.eduservice.entity.frontvo;
 
 import lombok.Data;
 import lombok.Getter;
@@ -10,4 +10,6 @@ import lombok.Getter;
 @Data
 @Getter
 public class NullValueResult {
+    private String result;
+
 }

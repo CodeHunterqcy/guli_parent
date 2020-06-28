@@ -2,43 +2,34 @@ package com.atguigu.eduservice.service.impl;
 
 import com.atguigu.eduservice.entity.EduCourse;
 import com.atguigu.eduservice.entity.EduCourseDescription;
-import com.atguigu.eduservice.entity.EduTeacher;
 import com.atguigu.eduservice.entity.frontvo.CourseFrontVo;
 import com.atguigu.eduservice.entity.frontvo.CourseWebVo;
 import com.atguigu.eduservice.entity.vo.CourseInfoVo;
 import com.atguigu.eduservice.entity.vo.CoursePublishVo;
-import com.atguigu.eduservice.entity.vo.NullValueResult;
+import com.atguigu.eduservice.entity.frontvo.NullValueResult;
 import com.atguigu.eduservice.mapper.EduCourseMapper;
 import com.atguigu.eduservice.service.EduChapterService;
 import com.atguigu.eduservice.service.EduCourseDescriptionService;
 import com.atguigu.eduservice.service.EduCourseService;
 import com.atguigu.eduservice.service.EduVideoService;
 import com.atguigu.servicebase.exceptionhandler.GuliException;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fasterxml.jackson.databind.node.ValueNode;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.redis.connection.BitFieldSubCommands;
-import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * <p>
@@ -203,22 +194,25 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
     @Override
     public CourseWebVo getBaseCourseInfo(String courseId) {
         //redis拿
-
         Object redisObj = valueOperations.get(courseId);
         //命中缓存
         if (null!=redisObj){
             if (redisObj instanceof NullValueResult){
+                System.out.println("是空对象");
                 return null;
             }
+            System.out.println("从缓存拿到的");
             return (CourseWebVo) redisObj;
         }
         try{
             CourseWebVo courseWebVo =  baseMapper.getBaseCourseInfo(courseId);
 
             if (courseWebVo!=null){
+                System.out.println("数据库查到，写入缓存中");
                 valueOperations.set(courseId,courseWebVo,10,TimeUnit.MINUTES);
                 return courseWebVo;
             }else{
+                System.out.println("数据库没有，缓存空对象，解决缓存穿透");
                 valueOperations.set(courseId,new NullValueResult(),10,TimeUnit.MINUTES);
             }
         }finally {
