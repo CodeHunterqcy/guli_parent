@@ -61,7 +61,7 @@ redis这块，没有做缓存一致性，我自己设置了几个场景来学习
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20200627013606334.png)
 
 ## 实现常用课程LRU类
-	<h1>
+	
 	
 	
 	/**
@@ -208,4 +208,36 @@ redis这块，没有做缓存一致性，我自己设置了几个场景来学习
 	
 	}
 	
-	</h1>
+	
+	
+```
+
+   public CourseWebVo getBaseCourseInfo(String courseId) {
+        //redis拿
+        Object redisObj = valueOperations.get(courseId);
+        //命中缓存
+        if (null!=redisObj){
+            if (redisObj instanceof NullValueResult){
+                System.out.println("是空对象");
+                return null;
+            }
+            System.out.println("从缓存拿到的");
+            return (CourseWebVo) redisObj;
+        }
+        try{
+            CourseWebVo courseWebVo =  baseMapper.getBaseCourseInfo(courseId);
+
+            if (courseWebVo!=null){
+                System.out.println("数据库查到，写入缓存中");
+                valueOperations.set(courseId,courseWebVo,10,TimeUnit.MINUTES);
+                return courseWebVo;
+            }else{
+                System.out.println("数据库没有，缓存空对象，解决缓存穿透");
+                valueOperations.set(courseId,new NullValueResult(),10,TimeUnit.MINUTES);
+            }
+        }finally {
+
+        }
+        return null;
+    }
+```
