@@ -4,7 +4,7 @@ package com.atguigu.commonutils;
  * @author CodeHunter_qcy
  * @date 2020/6/26 - 23:03
  */
-
+//LUR类，存放常用课程
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
