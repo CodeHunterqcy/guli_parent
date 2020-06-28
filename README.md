@@ -2,7 +2,7 @@
 
 ​	五一放假期间，粗略的由Spring过度到SpringBoot，上手很舒服。说实话只看了6天的课程，期间与其有关的技术文章看了些许，但是还是感觉很空虚，应该写一个完整的项目去体会一下，所以挑选了一个适合我的项目。于是就有了这个仓库。
 
-​	我是照着B站的课程学的，链接<https://www.bilibili.com/video/BV1y7411y7am>在此。推荐给正在学SpringBoot的小伙伴，一共307集，很感谢这位老师。
+​	我是照着B站的课程学的，[链接在此](https://www.bilibili.com/video/BV1y7411y7am)。推荐给正在学SpringBoot的小伙伴，一共307集，很感谢这位老师。
 
 # 项目介绍
 
@@ -210,6 +210,8 @@ redis这块，没有做缓存一致性，我自己设置了几个场景来学习
 	
 	
 	
+
+## 方案一解决缓存穿透
 ```
 
    public CourseWebVo getBaseCourseInfo(String courseId) {
