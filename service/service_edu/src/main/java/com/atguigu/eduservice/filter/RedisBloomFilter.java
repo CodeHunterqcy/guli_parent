@@ -1,6 +1,9 @@
 package com.atguigu.eduservice.filter;
 
+import com.atguigu.eduservice.entity.EduCourse;
 import com.atguigu.eduservice.mapper.EduCourseMapper;
+import com.atguigu.eduservice.service.EduCourseService;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.google.common.hash.Funnels;
 import com.google.common.hash.Hashing;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,14 +35,18 @@ public class RedisBloomFilter {
     private final String key = "course_filter";
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private EduCourseService courseService;
 
-    private EduCourseMapper courseMapper;
 
     @PostConstruct
     private void init() {
         this.numBits = optimalNumOfBits(size, fpp);
         this.numHashFunctions = optimalNumOfHashFunctions(size, numBits);
-
+        List<EduCourse> list = courseService.list(null);
+        for (EduCourse course:list){
+            this.put(course.getId());
+        }
     }
 
     //计算hash函数的个数
