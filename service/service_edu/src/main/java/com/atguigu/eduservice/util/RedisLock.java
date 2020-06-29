@@ -53,7 +53,7 @@ public class RedisLock {
      * @param lockKey
      * @param timeStamp
      */
-    public void release(String lockKey, String timeStamp) {
+    public void unlock(String lockKey, String timeStamp) {
         try {
             String currentValue = stringRedisTemplate.opsForValue().get(lockKey);
             if (!StringUtils.isEmpty(currentValue) && currentValue.equals(timeStamp)) {
@@ -61,7 +61,7 @@ public class RedisLock {
                 stringRedisTemplate.opsForValue().getOperations().delete(lockKey);
             }
         } catch (Exception e) {
-            System.out.println("警报！警报！警报！解锁异常");
+            System.out.println("解锁异常");
         }
     }
 

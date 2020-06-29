@@ -231,7 +231,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
 
         if (!bloomFilter.isExist(courseId)) {
             System.out.println("数据库不存在ID：" + courseId + "已拦截");
-
+            return null;
         }
         //redis拿
         Object redisObj = valueOperations.get(courseId);
@@ -241,9 +241,8 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
             return (CourseWebVo) redisObj;
         }
         //加锁解决缓存击穿
-        redisLock.lock(courseId,String.valueOf(System.currentTimeMillis()+TIMEOUT));
+        redisLock.lock(courseId+"qcy",String.valueOf(System.currentTimeMillis()+TIMEOUT));
         try {
-
             //redis拿
            redisObj = valueOperations.get(courseId);
             //命中缓存
@@ -251,6 +250,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
                 System.out.println("从缓存拿到的");
                 return (CourseWebVo) redisObj;
             }
+
             CourseWebVo courseWebVo = baseMapper.getBaseCourseInfo(courseId);
             if (courseWebVo != null) {
                 System.out.println("数据库查到，写入缓存中");
@@ -258,7 +258,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
                 return courseWebVo;
             }
         } finally {
-            redisLock.release(courseId,String.valueOf(System.currentTimeMillis()+TIMEOUT));
+            redisLock.unlock(courseId+"qcy",String.valueOf(System.currentTimeMillis()+TIMEOUT));
         }
         return null;
     }
