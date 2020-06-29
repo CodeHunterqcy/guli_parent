@@ -13,6 +13,7 @@ import com.atguigu.eduservice.service.EduChapterService;
 import com.atguigu.eduservice.service.EduCourseDescriptionService;
 import com.atguigu.eduservice.service.EduCourseService;
 import com.atguigu.eduservice.service.EduVideoService;
+import com.atguigu.eduservice.util.RedisLock;
 import com.atguigu.servicebase.exceptionhandler.GuliException;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -54,14 +55,13 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
 
     @Autowired
     private EduChapterService chapterService;
-
-    @Autowired
-    private RedisTemplate redisTemplate;
     @Resource
     private ValueOperations<String, Object> valueOperations;
     @Autowired
     private RedisBloomFilter bloomFilter;
-
+    @Autowired
+    private RedisLock redisLock;
+    private static final int TIMEOUT =5*1000;
     //添加课程基本信息的方法
     @Override
     public String saveCourseInfo(CourseInfoVo courseInfoVo) {
@@ -231,7 +231,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
 
         if (!bloomFilter.isExist(courseId)) {
             System.out.println("数据库不存在ID：" + courseId + "已拦截");
-            return null;
+
         }
         //redis拿
         Object redisObj = valueOperations.get(courseId);
@@ -240,7 +240,17 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
             System.out.println("从缓存拿到的");
             return (CourseWebVo) redisObj;
         }
+        //加锁解决缓存击穿
+        redisLock.lock(courseId,String.valueOf(System.currentTimeMillis()+TIMEOUT));
         try {
+
+            //redis拿
+           redisObj = valueOperations.get(courseId);
+            //命中缓存
+            if (null != redisObj) {
+                System.out.println("从缓存拿到的");
+                return (CourseWebVo) redisObj;
+            }
             CourseWebVo courseWebVo = baseMapper.getBaseCourseInfo(courseId);
             if (courseWebVo != null) {
                 System.out.println("数据库查到，写入缓存中");
@@ -248,7 +258,7 @@ public class EduCourseServiceImpl extends ServiceImpl<EduCourseMapper, EduCourse
                 return courseWebVo;
             }
         } finally {
-
+            redisLock.release(courseId,String.valueOf(System.currentTimeMillis()+TIMEOUT));
         }
         return null;
     }
